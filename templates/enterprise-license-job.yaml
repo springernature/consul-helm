@@ -65,8 +65,35 @@ spec:
             {{- end}}
           command:
             - "/bin/sh"
-            - "-ec"
+            - "-c"
             - |
+              log() {
+                echo "$(date +%d-%m-%Y" "%H:%M:%S) $@"
+              }
+
+              log "Waiting for leader to be elected..."
+              while true; do
+                OUTPUT=$(curl --silent --show-error --fail \
+                  --max-time 2 \
+                  {{- if .Values.global.tls.enabled }}
+                  --cacert /consul/tls/ca/tls.crt \
+                  {{- end }}
+                  "$CONSUL_HTTP_ADDR/v1/status/leader" 2>&1)
+                CODE=$?
+                log "curl $CONSUL_HTTP_ADDR/v1/status/leader: $OUTPUT"
+
+                # Need to check for empty output because if the servers
+                # are running but no leader is elected the endpoint
+                # will return HTTP 200 but with empty output.
+                if [ $CODE -eq 0 ] && [ "$OUTPUT" != '""' ]; then
+                  log "Leader elected"
+                  break
+                fi
+
+                log "Retrying in 2s"
+                sleep 2s
+              done
+
               consul license put "${ENTERPRISE_LICENSE}"
           {{- if .Values.global.tls.enabled }}
           volumeMounts:
