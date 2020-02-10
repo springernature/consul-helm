@@ -654,3 +654,45 @@ key2: value2' \
   actual=$(echo $ca_cert_volume | jq -r '.secret.items[0].key' | tee /dev/stderr)
   [ "${actual}" = "key" ]
 }
+
+#--------------------------------------------------------------------
+# global.federation.enabled
+
+@test "meshGateway/Deployment: -expose-servers set when federation.enabled=true and federation.type= 'mesh-gateway'" {
+  cd `chart_dir`
+  local actual=$(helm template \
+      -x templates/mesh-gateway-deployment.yaml  \
+      --set 'meshGateway.enabled=true' \
+      --set 'connectInject.enabled=true' \
+      --set 'global.federation.enabled=true' \
+      --set 'global.federation.type=mesh-gateway' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command | join(" ") | contains("-expose-servers")' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "meshGateway/Deployment: -expose-servers not set when federation.enabled=false and federation.type='mesh-gateway'" {
+  cd `chart_dir`
+  local actual=$(helm template \
+      -x templates/mesh-gateway-deployment.yaml  \
+      --set 'meshGateway.enabled=true' \
+      --set 'connectInject.enabled=true' \
+      --set 'global.federation.enabled=false' \
+      --set 'global.federation.type=mesh-gateway' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command | join(" ") | contains("-expose-servers")' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+}
+
+@test "meshGateway/Deployment: -expose-servers not set when federation.enabled=true and federation.type!='mesh-gateway'" {
+  cd `chart_dir`
+  local actual=$(helm template \
+      -x templates/mesh-gateway-deployment.yaml  \
+      --set 'meshGateway.enabled=true' \
+      --set 'connectInject.enabled=true' \
+      --set 'global.federation.enabled=true' \
+      --set 'global.federation.type=something-else' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command | join(" ") | contains("-expose-servers")' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+}

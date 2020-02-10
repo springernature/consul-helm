@@ -138,6 +138,17 @@ global:
       secretName: ""
       secretKey: ""
 
+  # Configures Consul datacenter federation.
+  federation:
+    # If true and federation.type="mesh-gateway" servers and mesh gateways will
+    # have mesh gateway federation enabled.
+    # Additional configuration will be needed to provide the addresses of the
+    # remote datacenter's mesh gateway to federate with.
+    # This setting must be true in both primary and secondary datacenters.
+    enabled: false
+    # The only currently supported federation type is mesh-gateway.
+    type: "mesh-gateway"
+
 # Server, when enabled, configures a server cluster to run. This should
 # be disabled if you plan on connecting to a Consul cluster external to
 # the Kube cluster.
