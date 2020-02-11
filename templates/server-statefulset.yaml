@@ -198,8 +198,11 @@ spec:
               name: dns-udp
               protocol: "UDP"
           readinessProbe:
-            # NOTE(mitchellh): when our HTTP status endpoints support the
-            # proper status codes, we should switch to that. This is temporary.
+            {{- if .Values.server.readinessProbe.path }}
+            httpGet:
+              path: {{ .Values.server.readinessProbe.path | quote }}
+              port: 8500
+            {{- else }}
             exec:
               command:
                 - "/bin/sh"
@@ -213,6 +216,7 @@ spec:
                   curl http://127.0.0.1:8500/v1/status/leader \
                   {{- end }}
                   2>/dev/null | grep -E '".+"'
+            {{- end }}
             failureThreshold: 2
             initialDelaySeconds: 5
             periodSeconds: 3
