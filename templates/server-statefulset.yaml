@@ -201,7 +201,8 @@ spec:
             {{- if .Values.server.readinessProbe.path }}
             httpGet:
               path: {{ .Values.server.readinessProbe.path | quote }}
-              port: 8500
+              port: 8501
+              scheme: HTTPS
             {{- else }}
             exec:
               command:
